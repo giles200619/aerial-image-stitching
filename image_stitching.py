@@ -4,18 +4,12 @@
 """
 
 import cv2
-import skimage
 import numpy as np
 from matplotlib import pyplot as plt
 import math
-import importlib
-from numpy import matrix
 from sklearn.neighbors import NearestNeighbors
 import random
-import os
 import glob
-from sklearn.svm import SVC
-import imutils
 
 
 def framecapture(path): 
