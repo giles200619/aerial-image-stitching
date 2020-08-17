@@ -1,7 +1,7 @@
 # aerial-image-stitching
 
 ![result](/img/result.png)
-A simple implementation that stiches images from UAV view into a map. First estimate camera movement by applying SIFT feature matching and ratio test to expand the current image, then warp the new frame to the current frame using the estimated homography matrix.
+A simple implementation that stitches images from UAV view into a map. First estimate camera movement by applying SIFT feature matching and ratio test to expand the current image, then warp the new frame to the current frame using the estimated homography matrix.
 
 ## Dependencies
 * Numpy
