@@ -65,7 +65,10 @@ def align_image_using_feature(x1, x2, ransac_thr, ransac_iter):
          #to solveAh=b,define A
         A,b = get_Ab(selected_x1,selected_x2)
         #H = ((A.T*A).I)*(A.T)*b
-        H = np.linalg.inv(np.matmul(A.transpose(), A))
+        try:
+            H = np.linalg.inv(np.matmul(A.transpose(), A))
+        except:
+            continue
         H = np.matmul(H, A.transpose())
         H = np.matmul(H, b)
         H = np.append(H,[1])
@@ -82,10 +85,8 @@ def align_image_using_feature(x1, x2, ransac_thr, ransac_iter):
         inlier_list.append(inlier)
         if inlier == max(inlier_list):
             best_A = H
-        
-    A = best_A
-    print(max(inlier_list))
-    return A
+    
+    return best_A
 
 def visualize_find_match(img1, img2, x1, x2, img_h=500):
     assert x1.shape == x2.shape, 'x1 and x2 should have same shape!'
@@ -114,23 +115,14 @@ def get_features(dst1,dst2):
     neigh.fit(des2)
     distances,matches = neigh.kneighbors(des1,n_neighbors=2, return_distance=True)
     
-    x1_des1 = []
-    x2_des1 = []
+    x1 = np.zeros((0,2))
+    x2 = np.zeros((0,2))
     for i in range(0,matches.shape[0]): # loop through all the matches for des1
-        if(distances[i][0]/distances[i][1]<0.5):
-            x1_des1.append(kp1[i])
-            x2_des1.append(kp2[matches[i][0]])
-    #find nearestN for each point in des2?         
-    
-    
-    x1 = np.zeros((len(x1_des1),2))
-    x2 = np.zeros((len(x2_des1),2))
-    
-    for i in range(0,len(x1_des1)):
-        (x1[i][0],x1[i][1]) = x1_des1[i].pt
-        (x2[i][0],x2[i][1]) = x2_des1[i].pt
-    
-    return x1,x2
+        if(distances[i][0]/distances[i][1]<0.5): # ratio test
+            x1 = np.vstack((x1, np.array([[(kp1[i].pt)[0], (kp1[i].pt)[1]]])))
+            x2 = np.vstack((x2, np.array([[(kp2[matches[i][0]].pt)[0], (kp2[matches[i][0]].pt)[1]]])))
+
+    return x1, x2
     
 def get_new_map_with_direction(x1,x2,img):
     
@@ -171,10 +163,10 @@ def stitch(img1,img2):
     new_map = get_new_map_with_direction(x1,x2,img1)
     img1 = new_map.astype(np.uint8)
     dst1 = preprocess(img1)
-    dst2 = preprocess(img2)
+    #dst2 = preprocess(img2)
     x1,x2=get_features(dst1,dst2) 
     #visualize_find_match(img1, img2, x1, x2)
-    H = align_image_using_feature(x1, x2, 5, 5000)      
+    H = align_image_using_feature(x1, x2, 5, 2000)      
     #H_I = np.linalg.inv(H)
     for i in range(0,new_map.shape[0]):
         for j in range(0,new_map.shape[1]):
@@ -196,7 +188,9 @@ if __name__=='__main__':
     img_list = glob.glob(path)
     result = cv2.imread(img_list[0],cv2.IMREAD_GRAYSCALE)          
     for i in range(1,len(img_list)):
+        print(i,'/',len(img_list))
         result = stitch(result,cv2.imread(img_list[i],cv2.IMREAD_GRAYSCALE))    
         
     plt.imshow(result,'gray')
     plt.axis('off')
+    plt.show()
